@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
   <meta charset="UTF-8" />
   <title>靈魂卡牌生成器 · V7 手機響應版</title>
@@ -9,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon.png"> 
+  <link rel="apple-touch-icon" href="icon.png">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,51 +25,188 @@
     /* 基礎設定 */
     body {
       background: radial-gradient(circle at top, #1f2937 0, #020617 60%, #000 100%);
-      margin: 0; font-family: system-ui, -apple-system, sans-serif;
-      overscroll-behavior-y: none; /* 禁止手機下拉刷新 */
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      overscroll-behavior-y: none;
+      /* 禁止手機下拉刷新 */
     }
+
     /* 安全區域設定 (避開 iPhone 瀏海與底部橫條) */
-    .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
+    .safe-pb {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
 
     /* 字體與捲軸 */
-    .font-song { font-family: 'Noto Serif TC', serif; }
-    .font-sans { font-family: system-ui, -apple-system, sans-serif; }
-    .font-cinzel { font-family: 'Cinzel', serif; }
-    
+    .font-song {
+      font-family: 'Noto Serif TC', serif;
+    }
+
+    .font-sans {
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .font-cinzel {
+      font-family: 'Cinzel', serif;
+    }
+
     /* 卡牌樣式 */
-    .export-wrapper { position: relative; display: inline-block; padding: 60px; background: transparent; }
-    .soul-card { position: relative; border-radius: 24px; overflow: hidden; transition: all 0.3s ease; }
-    .layer-photo { position: absolute; inset: 0; z-index: 1; }
-    .layer-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .layer-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-    .layer-grid { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-    .layer-border { position: absolute; inset: 1.2rem; border-radius: 1.25rem; pointer-events: none; z-index: 4; }
-    .layer-content { position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; }
+    .export-wrapper {
+      position: relative;
+      display: inline-block;
+      padding: 60px;
+      background: transparent;
+    }
+
+    .soul-card {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .layer-photo {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .layer-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .layer-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .layer-grid {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .layer-border {
+      position: absolute;
+      inset: 1.2rem;
+      border-radius: 1.25rem;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .layer-content {
+      position: relative;
+      z-index: 10;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2rem;
+    }
 
     /* UI 元件 */
-    .drop-zone { border: 2px dashed #475569; background: rgba(15, 23, 42, 0.6); transition: 0.2s; }
-    .edit-item { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 1rem; margin-bottom: 0.75rem; }
-    .edit-input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; font-size: 0.875rem; padding: 0.5rem; border-radius: 0.375rem; width: 100%; }
-    .edit-label { font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; display: block; text-transform: uppercase; }
-    
+    .drop-zone {
+      border: 2px dashed #475569;
+      background: rgba(15, 23, 42, 0.6);
+      transition: 0.2s;
+    }
+
+    .edit-item {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .edit-input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      width: 100%;
+    }
+
+    .edit-label {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      margin-bottom: 0.25rem;
+      display: block;
+      text-transform: uppercase;
+    }
+
     /* 設定按鈕 */
-    .setting-group-btn { flex: 1; font-size: 0.7rem; padding: 0.4rem; background: #334155; color: #cbd5e1; border: 1px solid #475569; }
-    .setting-group-btn:first-child { border-radius: 0.375rem 0 0 0.375rem; }
-    .setting-group-btn:last-child { border-radius: 0 0.375rem 0.375rem 0; }
-    .setting-group-btn.active { background: #34d399; color: #020617; border-color: #34d399; font-weight: bold; }
-    .mini-style-btn { width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid transparent; }
-    .mini-style-btn.selected { border-color: #34d399; box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3); }
+    .setting-group-btn {
+      flex: 1;
+      font-size: 0.7rem;
+      padding: 0.4rem;
+      background: #334155;
+      color: #cbd5e1;
+      border: 1px solid #475569;
+    }
+
+    .setting-group-btn:first-child {
+      border-radius: 0.375rem 0 0 0.375rem;
+    }
+
+    .setting-group-btn:last-child {
+      border-radius: 0 0.375rem 0.375rem 0;
+    }
+
+    .setting-group-btn.active {
+      background: #34d399;
+      color: #020617;
+      border-color: #34d399;
+      font-weight: bold;
+    }
+
+    .mini-style-btn {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 9999px;
+      border: 2px solid transparent;
+    }
+
+    .mini-style-btn.selected {
+      border-color: #34d399;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3);
+    }
 
     /* 手機版底部導覽列 */
     .mobile-nav-btn {
-      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: #64748b; padding: 8px 0; transition: 0.2s;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      padding: 8px 0;
+      transition: 0.2s;
     }
-    .mobile-nav-btn.active { color: #34d399; }
-    .mobile-nav-btn svg { width: 24px; height: 24px; margin-bottom: 2px; }
-    .mobile-nav-btn span { font-size: 10px; }
+
+    .mobile-nav-btn.active {
+      color: #34d399;
+    }
+
+    .mobile-nav-btn svg {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 2px;
+    }
+
+    .mobile-nav-btn span {
+      font-size: 10px;
+    }
   </style>
 </head>
+
 <body class="h-screen text-slate-100 overflow-hidden flex flex-col">
 
   <!-- Header -->
@@ -82,15 +220,17 @@
   </header>
 
   <div class="flex-1 flex overflow-hidden relative">
-    
+
     <!-- 左側控制區 (手機版：分頁1) -->
     <aside id="panel-editor" class="w-full md:w-[420px] bg-slate-900/80 border-r border-slate-800 flex flex-col z-20 shadow-2xl absolute md:relative inset-0 md:inset-auto transition-transform duration-300 ease-in-out">
-      
+
       <!-- 上傳區 -->
       <div class="p-4 border-b border-slate-800 flex-none bg-slate-900">
         <div id="dropZone" class="drop-zone rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer text-center h-16 group">
           <div class="text-slate-300 font-medium text-xs flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
             點擊上傳圖片
           </div>
           <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
@@ -118,7 +258,7 @@
 
     <!-- 右側預覽區 (手機版：分頁2) -->
     <main id="panel-preview" class="flex-1 bg-slate-950 flex flex-col overflow-hidden absolute md:relative inset-0 md:inset-auto translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-30">
-      
+
       <!-- 預覽控制 Bar -->
       <div class="h-10 border-b border-slate-800/50 flex items-center justify-between px-4 bg-slate-900/30 backdrop-blur z-10 flex-none">
         <div class="text-xs text-slate-400"><span id="pageInfo">0/0</span></div>
@@ -136,12 +276,12 @@
       <!-- 手機版專用：浮動控制面板 (在預覽頁面下方) -->
       <div class="md:hidden absolute bottom-16 left-0 w-full bg-slate-900/90 border-t border-slate-800 backdrop-blur p-3 z-40 safe-pb">
         <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-           <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('theme','default')">暗夜</button>
-           <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('theme','light')">晨曦</button>
-           <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('theme','gold')">黑金</button>
-           <div class="w-px h-6 bg-slate-700 mx-1"></div>
-           <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('ratio','card')">卡牌</button>
-           <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('ratio','story')">限動</button>
+          <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('theme','default')">暗夜</button>
+          <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('theme','light')">晨曦</button>
+          <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('theme','gold')">黑金</button>
+          <div class="w-px h-6 bg-slate-700 mx-1"></div>
+          <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('ratio','card')">卡牌</button>
+          <button class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300 whitespace-nowrap border border-slate-700" onclick="batchUpdate('ratio','story')">限動</button>
         </div>
         <button onclick="downloadAll()" id="mobileDlBtn" class="w-full py-2.5 mt-2 rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-lg">下載全部圖片</button>
       </div>
@@ -150,11 +290,15 @@
     <!-- 手機版底部導覽列 (Fixed Bottom Nav) -->
     <div class="md:hidden fixed bottom-0 w-full h-14 bg-slate-950 border-t border-slate-800 flex z-50 safe-pb">
       <button onclick="switchMobileTab('editor')" id="nav-editor" class="mobile-nav-btn active">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
         <span>編輯內容</span>
       </button>
       <button onclick="switchMobileTab('preview')" id="nav-preview" class="mobile-nav-btn">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
         <span>風格預覽</span>
       </button>
     </div>
@@ -165,47 +309,120 @@
   <script>
     // PWA Init
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
-
     // === 核心邏輯 (簡化版) ===
-    let state = { cards: [], page: 1, pageSize: 4, overlayOpacity: 0.75, globalSettings: { theme: 'default', font: 'sans', ratio: 'card' } };
-    const themes = {
-      default: { bgCard: '#020617', overlay: (op)=>`linear-gradient(to bottom, rgba(2,6,23,0.2), rgba(2,6,23,${op}))`, gridOpacity: 0.42, gridColor: 'rgba(248,250,252,0.6)', border: 'border:1px solid rgba(148,163,184,0.38);box-shadow:0 0 20px rgba(234,179,8,0.18),inset 0 0 30px rgba(15,23,42,0.92)', tagBg: 'bg-slate-900/50 border-slate-500/50 text-slate-300', lineGrad: 'from-amber-200/40', accent: 'bg-amber-400', accentTx: 'text-amber-200', orbit: 'bg-sky-400', orbitTx: 'text-sky-200', orbitGrad: 'from-sky-400', textMain:'text-white', textSub:'text-slate-100', textFooter:'text-slate-400' },
-      light: { bgCard: '#f8fafc', overlay: (op)=>`linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,${Math.min(op+0.15,0.98)}))`, gridOpacity: 0.2, gridColor: 'rgba(148,163,184,0.5)', border: 'border:1px solid rgba(148,163,184,0.4);box-shadow:0 0 30px rgba(226,232,240,0.8),inset 0 0 20px rgba(255,255,255,0.8)', tagBg: 'bg-white/80 border-slate-300 text-slate-500', lineGrad: 'from-slate-400/50', accent: 'bg-emerald-500', accentTx: 'text-emerald-600', orbit: 'bg-indigo-400', orbitTx: 'text-indigo-400', orbitGrad: 'from-indigo-400', textMain:'text-slate-800', textSub:'text-slate-600', textFooter:'text-slate-400' },
-      gold: { bgCard: '#1c1917', overlay: (op)=>`linear-gradient(to bottom, rgba(28,25,23,0.2), rgba(28,25,23,${op}))`, gridOpacity: 0.3, gridColor: 'rgba(251,191,36,0.4)', border: 'border:1px solid rgba(251,191,36,0.5);box-shadow:0 0 25px rgba(217,119,6,0.25),inset 0 0 40px rgba(0,0,0,0.8)', tagBg: 'bg-black/60 border-amber-500/50 text-amber-500', lineGrad: 'from-amber-500', accent: 'bg-amber-500', accentTx: 'text-amber-500', orbit: 'bg-amber-300', orbitTx: 'text-amber-300', orbitGrad: 'from-amber-300', textMain:'text-amber-50', textSub:'text-amber-100/90', textFooter:'text-amber-500/60' }
+    let state = {
+      cards: [],
+      page: 1,
+      pageSize: 4,
+      overlayOpacity: 0.75,
+      globalSettings: {
+        theme: 'default',
+        font: 'sans',
+        ratio: 'card'
+      }
     };
-
+    const themes = {
+      default: {
+        bgCard: '#020617',
+        overlay: (op) => `linear-gradient(to bottom, rgba(2,6,23,0.2), rgba(2,6,23,${op}))`,
+        gridOpacity: 0.42,
+        gridColor: 'rgba(248,250,252,0.6)',
+        border: 'border:1px solid rgba(148,163,184,0.38);box-shadow:0 0 20px rgba(234,179,8,0.18),inset 0 0 30px rgba(15,23,42,0.92)',
+        tagBg: 'bg-slate-900/50 border-slate-500/50 text-slate-300',
+        lineGrad: 'from-amber-200/40',
+        accent: 'bg-amber-400',
+        accentTx: 'text-amber-200',
+        orbit: 'bg-sky-400',
+        orbitTx: 'text-sky-200',
+        orbitGrad: 'from-sky-400',
+        textMain: 'text-white',
+        textSub: 'text-slate-100',
+        textFooter: 'text-slate-400'
+      },
+      light: {
+        bgCard: '#f8fafc',
+        overlay: (op) => `linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,${Math.min(op+0.15,0.98)}))`,
+        gridOpacity: 0.2,
+        gridColor: 'rgba(148,163,184,0.5)',
+        border: 'border:1px solid rgba(148,163,184,0.4);box-shadow:0 0 30px rgba(226,232,240,0.8),inset 0 0 20px rgba(255,255,255,0.8)',
+        tagBg: 'bg-white/80 border-slate-300 text-slate-500',
+        lineGrad: 'from-slate-400/50',
+        accent: 'bg-emerald-500',
+        accentTx: 'text-emerald-600',
+        orbit: 'bg-indigo-400',
+        orbitTx: 'text-indigo-400',
+        orbitGrad: 'from-indigo-400',
+        textMain: 'text-slate-800',
+        textSub: 'text-slate-600',
+        textFooter: 'text-slate-400'
+      },
+      gold: {
+        bgCard: '#1c1917',
+        overlay: (op) => `linear-gradient(to bottom, rgba(28,25,23,0.2), rgba(28,25,23,${op}))`,
+        gridOpacity: 0.3,
+        gridColor: 'rgba(251,191,36,0.4)',
+        border: 'border:1px solid rgba(251,191,36,0.5);box-shadow:0 0 25px rgba(217,119,6,0.25),inset 0 0 40px rgba(0,0,0,0.8)',
+        tagBg: 'bg-black/60 border-amber-500/50 text-amber-500',
+        lineGrad: 'from-amber-500',
+        accent: 'bg-amber-500',
+        accentTx: 'text-amber-500',
+        orbit: 'bg-amber-300',
+        orbitTx: 'text-amber-300',
+        orbitGrad: 'from-amber-300',
+        textMain: 'text-amber-50',
+        textSub: 'text-amber-100/90',
+        textFooter: 'text-amber-500/60'
+      }
+    };
     // 手機版分頁切換
     window.switchMobileTab = (tab) => {
       const editor = document.getElementById('panel-editor');
       const preview = document.getElementById('panel-preview');
       const btnEd = document.getElementById('nav-editor');
       const btnPr = document.getElementById('nav-preview');
-
-      if(tab === 'editor') {
+      if (tab === 'editor') {
         editor.classList.remove('-translate-x-full');
         preview.classList.add('translate-x-full');
         preview.classList.remove('translate-x-0');
-        btnEd.classList.add('active'); btnPr.classList.remove('active');
+        btnEd.classList.add('active');
+        btnPr.classList.remove('active');
       } else {
         editor.classList.add('-translate-x-full');
         preview.classList.remove('translate-x-full');
         preview.classList.add('translate-x-0');
-        btnEd.classList.remove('active'); btnPr.classList.add('active');
+        btnEd.classList.remove('active');
+        btnPr.classList.add('active');
         // 切換到預覽時重新渲染，確保尺寸正確
         renderPreview();
       }
     };
-
     // 更新函式
-    window.batchUpdate = (k,v) => { state.globalSettings[k]=v; state.cards.forEach(c=>c[k]=v); updateEditorList(); renderPreview(); };
-    window.updateSingle = (i,k,v) => { state.cards[i][k]=v; updateEditorList(); renderPreview(); };
-    window.updateOpacity = (v) => { state.overlayOpacity=v/100; renderPreview(); };
-    
+    window.batchUpdate = (k, v) => {
+      state.globalSettings[k] = v;
+      state.cards.forEach(c => c[k] = v);
+      updateEditorList();
+      renderPreview();
+    };
+    window.updateSingle = (i, k, v) => {
+      state.cards[i][k] = v;
+      updateEditorList();
+      renderPreview();
+    };
+    window.updateOpacity = (v) => {
+      state.overlayOpacity = v / 100;
+      renderPreview();
+    };
+
     function updateEditorList() {
-      const c = document.getElementById('editorList'); c.innerHTML='';
-      if(!state.cards.length){ c.innerHTML='<div class="text-center text-slate-500 py-10 text-sm">尚未有資料<br><button onclick="loadSample()" class="text-emerald-400">載入範例</button></div>'; return; }
+      const c = document.getElementById('editorList');
+      c.innerHTML = '';
+      if (!state.cards.length) {
+        c.innerHTML = '<div class="text-center text-slate-500 py-10 text-sm">尚未有資料<br><button onclick="loadSample()" class="text-emerald-400">載入範例</button></div>';
+        return;
+      }
       state.cards.forEach((card, i) => {
-        const item = document.createElement('div'); item.className='edit-item';
+        const item = document.createElement('div');
+        item.className = 'edit-item';
         item.innerHTML = `
           <div class="flex gap-3 items-start">
             <div class="shrink-0 relative"><img src="${card.image||''}" class="w-16 h-20 object-cover rounded bg-slate-950 border border-slate-700"><div class="absolute -top-2 -left-2 bg-slate-700 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow">${i+1}</div></div>
@@ -219,60 +436,195 @@
       });
     }
 
-    function createHTML(d, i, isEx=false) {
-      const th = themes[d.theme||state.globalSettings.theme]; const rt = d.ratio||state.globalSettings.ratio; const ft = d.font||state.globalSettings.font;
-      let w='360px', h='576px'; if(rt=='post'){h='450px'} if(rt=='story'){h='640px'};
+    function createHTML(d, i, isEx = false) {
+      const th = themes[d.theme || state.globalSettings.theme];
+      const rt = d.ratio || state.globalSettings.ratio;
+      const ft = d.font || state.globalSettings.font;
+      let w = '360px',
+        h = '576px';
+      if (rt == 'post') {
+        h = '450px'
+      }
+      if (rt == 'story') {
+        h = '640px'
+      };
       // 手機預覽時縮放 (僅在預覽容器內)
       const scaleClass = isEx ? '' : 'scale-[0.85] origin-top';
-      const dlBtn = isEx?'':`<button onclick="dlSingle(${i})" class="absolute top-2 right-2 z-50 p-2 bg-slate-900/50 rounded-full text-white shadow border border-white/20"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></button>`;
-      
+      const dlBtn = isEx ? '' : `<button onclick="dlSingle(${i})" class="absolute top-2 right-2 z-50 p-2 bg-slate-900/50 rounded-full text-white shadow border border-white/20"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></button>`;
       return `<div class="relative inline-block p-2 ${scaleClass}" style="width:${isEx?'auto':parseInt(w)+16+'px'}">${dlBtn}<div class="soul-card ${ft=='serif'?'font-song':'font-sans'}" style="width:${w};height:${h};background:${th.bgCard};box-shadow:0 0 40px rgba(0,0,0,0.5)"><div class="layer-photo"><img src="${d.image||''}"></div><div class="layer-overlay" style="background:${th.overlay(state.overlayOpacity)}"></div><div class="layer-grid" style="opacity:${th.gridOpacity};background-image:radial-gradient(${th.gridColor} 1px,transparent 0)"></div><div class="layer-border" style="${th.border}"></div><div class="layer-content"><div><div class="flex items-center gap-3 mb-4 opacity-90 ${d.align=='center'?'justify-center':''}"><span class="px-3 py-1 rounded-full text-[10px] tracking-[0.2em] uppercase border ${th.tagBg} font-cinzel">Soul Card</span><div class="h-px ${d.align=='center'?'w-12':'flex-1'} bg-gradient-to-r ${th.lineGrad} to-transparent"></div></div><h2 class="text-2xl md:text-3xl font-bold tracking-widest ${th.textMain} drop-shadow-lg leading-tight ${d.align=='center'?'text-center':''}">${esc(d.title)}</h2></div><div class="text-sm md:text-base leading-relaxed ${th.textSub} font-medium whitespace-pre-line drop-shadow opacity-95 ${d.align=='center'?'text-center':'text-left'}">${esc(d.text)}</div><div class="pt-4 border-t ${d.theme=='light'?'border-slate-300':'border-white/20'}"><div class="flex justify-between items-end"><div class="flex items-center gap-2"><span class="w-1 h-1 rounded-full ${th.accent}"></span><span class="w-8 h-px bg-gradient-to-r ${th.lineGrad} to-transparent"></span><span class="text-[10px] ${th.accentTx}">東方</span><div class="text-xs ${th.textFooter} font-mono ml-2">${esc(d.footer)}</div></div><div class="text-right flex items-center gap-2"><span class="text-[10px] ${th.orbitTx}">星圖</span><span class="w-8 h-px bg-gradient-to-l ${th.orbitGrad} to-transparent"></span><span class="w-1 h-1 rounded-full ${th.orbit}"></span></div></div></div></div></div></div>`;
     }
 
     function renderPreview() {
-      const c = document.getElementById('previewContainer'); c.innerHTML='';
-      const start=(state.page-1)*state.pageSize; const end=Math.min(start+state.pageSize,state.cards.length);
-      if(!state.cards.length){ c.innerHTML='<div class="mt-20 text-slate-500 text-sm">請在「編輯內容」上傳圖片</div>'; return;}
-      for(let i=start;i<end;i++){ const d=document.createElement('div'); d.innerHTML=createHTML(state.cards[i],i); c.appendChild(d); }
-      document.getElementById('pageInfo').textContent=`${state.page}/${Math.ceil(state.cards.length/state.pageSize)}`;
+      const c = document.getElementById('previewContainer');
+      c.innerHTML = '';
+      const start = (state.page - 1) * state.pageSize;
+      const end = Math.min(start + state.pageSize, state.cards.length);
+      if (!state.cards.length) {
+        c.innerHTML = '<div class="mt-20 text-slate-500 text-sm">請在「編輯內容」上傳圖片</div>';
+        return;
+      }
+      for (let i = start; i < end; i++) {
+        const d = document.createElement('div');
+        d.innerHTML = createHTML(state.cards[i], i);
+        c.appendChild(d);
+      }
+      document.getElementById('pageInfo').textContent = `${state.page}/${Math.ceil(state.cards.length/state.pageSize)}`;
+    }
+    // 基礎操作函式
+    window.upd = (i, k, v) => {
+      state.cards[i][k] = v;
+      renderPreview();
+    }
+    window.rm = (i) => {
+      if (confirm('刪除?')) {
+        state.cards.splice(i, 1);
+        updateEditorList();
+        renderPreview();
+      }
     }
 
-    // 基礎操作函式
-    window.upd=(i,k,v)=>{state.cards[i][k]=v;renderPreview();}
-    window.rm=(i)=>{if(confirm('刪除?')){state.cards.splice(i,1);updateEditorList();renderPreview();}}
-    function esc(t){return t?t.replace(/&/g,"&amp;").replace(/</g,"&lt;"):""}
-    window.prevPage=()=>{state.page--;renderPreview();}
-    window.nextPage=()=>{state.page++;renderPreview();}
-
+    function esc(t) {
+      return t ? t.replace(/&/g, "&amp;").replace(/</g, "&lt;") : ""
+    }
+    window.prevPage = () => {
+      state.page--;
+      renderPreview();
+    }
+    window.nextPage = () => {
+      state.page++;
+      renderPreview();
+    }
     // 範例與上傳
-    window.loadSample=async()=>{ 
-      const u2b = async(u)=>{try{const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(u));const b=await r.blob();return new Promise(res=>{const f=new FileReader();f.onload=()=>res(f.result);f.readAsDataURL(b)})}catch{return ''}};
-      const raw=[{title:"靜觀子",text:"安住於當下的呼吸...",footer:"001",imageUrl:"https://images.unsplash.com/photo-1518173946687-a4c88928d9fd?w=800"},{title:"一字山人",text:"萬物皆可輕聲落下...",footer:"002",imageUrl:"https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800"}];
-      state.cards = await Promise.all(raw.map(async i=>({...i, image:await u2b(i.imageUrl), theme:'default', align:'left'})));
-      updateEditorList(); renderPreview(); switchMobileTab('editor');
+    window.loadSample = async () => {
+      const u2b = async (u) => {
+        try {
+          const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(u));
+          const b = await r.blob();
+          return new Promise(res => {
+            const f = new FileReader();
+            f.onload = () => res(f.result);
+            f.readAsDataURL(b)
+          })
+        } catch {
+          return ''
+        }
+      };
+      const raw = [{
+        title: "靜觀子",
+        text: "安住於當下的呼吸...",
+        footer: "001",
+        imageUrl: "https://images.unsplash.com/photo-1518173946687-a4c88928d9fd?w=800"
+      }, {
+        title: "一字山人",
+        text: "萬物皆可輕聲落下...",
+        footer: "002",
+        imageUrl: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800"
+      }];
+      state.cards = await Promise.all(raw.map(async i => ({
+        ...i,
+        image: await u2b(i.imageUrl),
+        theme: 'default',
+        align: 'left'
+      })));
+      updateEditorList();
+      renderPreview();
+      switchMobileTab('editor');
     };
-    document.getElementById('dropZone').onclick=()=>document.getElementById('fileInput').click();
-    document.getElementById('fileInput').onchange=(e)=>{ Array.from(e.target.files).forEach(f=>{ const r=new FileReader(); r.onload=(ev)=>{ state.cards.push({title:f.name.replace(/\.[^.]+$/,""), text:"（內容）", footer:"IMG", image:ev.target.result, theme:state.globalSettings.theme, align:'left'}); updateEditorList(); renderPreview(); }; r.readAsDataURL(f); }); switchMobileTab('editor'); };
-
-    // 下載
+    document.getElementById('dropZone').onclick = () => document.getElementById('fileInput').click();
+    document.getElementById('fileInput').onchange = (e) => {
+      Array.from(e.target.files).forEach(f => {
+        const r = new FileReader();
+        r.onload = (ev) => {
+          state.cards.push({
+            title: f.name.replace(/\.[^.]+$/, ""),
+            text: "（內容）",
+            footer: "IMG",
+            image: ev.target.result,
+            theme: state.globalSettings.theme,
+            align: 'left'
+          });
+          updateEditorList();
+          renderPreview();
+        };
+        r.readAsDataURL(f);
+      });
+      switchMobileTab('editor');
+    };
+    // ──────── 優化版下載邏輯 (解決卡頓與無反應) ────────
     window.downloadAll = async() => {
       if(!state.cards.length) return;
-      const btn = document.getElementById('mobileDlBtn'); btn.innerText='打包中...';
-      const z = new JSZip(); const b = document.getElementById('exportContainer'); b.innerHTML='';
-      state.cards.forEach((c,i)=>{const w=document.createElement('div');w.innerHTML=createHTML(c,i,true);w.id=`ex-${i}`;b.appendChild(w)});
-      await new Promise(r=>setTimeout(r,1000));
-      for(let i=0;i<state.cards.length;i++){ const d=await htmlToImage.toPng(document.getElementById(`ex-${i}`),{quality:1,pixelRatio:2,cacheBust:true}); z.file(`card-${i+1}.png`,d.split(',')[1],{base64:true}); }
-      const c = await z.generateAsync({type:'blob'}); saveAs(c,'cards.zip'); b.innerHTML=''; btn.innerText='下載全部圖片';
-    };
-    window.dlSingle = async(i)=>{ 
-      const c=state.cards[i]; const b=document.getElementById('exportContainer'); b.innerHTML=''; 
-      const w=document.createElement('div'); w.innerHTML=createHTML(c,i,true); w.id='ex'; b.appendChild(w); 
-      await new Promise(r=>setTimeout(r,600)); 
-      const d=await htmlToImage.toPng(document.getElementById('ex'),{quality:1,pixelRatio:2,cacheBust:true}); 
-      saveAs(d,`card-${i+1}.png`); b.innerHTML=''; 
-    }
 
-    updateEditorList(); renderPreview();
+      // 1. 取得兩個按鈕 (電腦版 & 手機版)
+      const btnDesktop = document.getElementById('btnDownload');
+      const btnMobile = document.getElementById('mobileDlBtn');
+      
+      // 定義更新按鈕狀態的函式 (包含 Loading 轉圈圈圖示)
+      const setBtnLoading = (text, isLoading) => {
+        const spinner = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        const content = isLoading ? `${spinner} ${text}` : text;
+        
+        if(btnDesktop) {
+          btnDesktop.disabled = isLoading;
+          btnDesktop.innerHTML = content;
+          // 視覺回饋：讓按鈕稍微變暗
+          btnDesktop.className = isLoading ? "w-full py-3 rounded-lg bg-slate-600 text-slate-300 font-bold shadow-none text-sm cursor-wait" : "w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-900/50 transition-all text-sm flex items-center justify-center gap-2";
+        }
+        if(btnMobile) {
+          btnMobile.disabled = isLoading;
+          btnMobile.innerHTML = content;
+          btnMobile.className = isLoading ? "w-full py-2.5 mt-2 rounded-lg bg-slate-600 text-slate-300 font-bold text-xs cursor-wait" : "w-full py-2.5 mt-2 rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-lg";
+        }
+      };
+
+      // 開始處理
+      setBtnLoading('準備中...', true);
+
+      const zip = new JSZip(); 
+      const box = document.getElementById('exportContainer'); 
+      box.innerHTML = '';
+
+      try {
+        // 2. 建立隱藏 DOM
+        state.cards.forEach((c,i)=>{
+          const w=document.createElement('div');
+          w.innerHTML=createHTML(c,i,true);
+          w.id=`ex-${i}`;
+          box.appendChild(w);
+        });
+
+        // 給予瀏覽器渲染緩衝時間
+        await new Promise(r=>setTimeout(r, 1000));
+
+        // 3. 逐張轉換 (加入 await setTimeout 讓 UI 有機會更新)
+        for(let i=0; i<state.cards.length; i++){
+          // 更新進度文字
+          setBtnLoading(`繪製中 (${i+1}/${state.cards.length})`, true);
+          
+          // 強制讓出執行緒 50ms，讓手機畫面刷新，避免凍結感
+          await new Promise(r => setTimeout(r, 50));
+
+          const d = await htmlToImage.toPng(document.getElementById(`ex-${i}`), {
+            quality: 1.0, 
+            pixelRatio: 2, // 2倍解析度，如果手機還是太卡，可以改成 1.5
+            cacheBust: true
+          });
+          
+          zip.file(`card-${i+1}.png`, d.split(',')[1], {base64:true});
+        }
+
+        setBtnLoading('打包壓縮中...', true);
+        const c = await zip.generateAsync({type:'blob'});
+        saveAs(c, 'soul-cards.zip');
+
+      } catch(e) { 
+        console.error(e);
+        alert('下載過程中發生錯誤，請重新整理後再試。'); 
+      } finally { 
+        box.innerHTML=''; 
+        setBtnLoading('下載全部 (ZIP)', false); 
+      }
+    };
   </script>
 </body>
+
 </html>
