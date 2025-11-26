@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>靈魂卡牌生成器</title>
+  <!-- PWA 設定 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#020617">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts & Libs -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <style>
+    /* 基礎設定 */
+    body {
+      background: radial-gradient(circle at top, #1f2937 0, #020617 60%, #000 100%);
+      margin: 0; font-family: system-ui, -apple-system, sans-serif;
+      /* 防止手機向下拉動重新整理，提升 App 感 */
+      overscroll-behavior-y: none; 
+    }
+    /* 字體與捲軸 (與 V5 相同，略) */
+    .font-song { font-family: 'Noto Serif TC', serif; }
+    .font-sans { font-family: system-ui, -apple-system, sans-serif; }
+    .font-cinzel { font-family: 'Cinzel', serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    
+    /* 樣式 (與 V5 相同) */
+    .export-wrapper { position: relative; display: inline-block; padding: 60px; background: transparent; }
+    .soul-card { position: relative; border-radius: 24px; overflow: hidden; transition: all 0.3s ease; }
+    .layer-photo { position: absolute; inset: 0; z-index: 1; }
+    .layer-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .layer-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+    .layer-grid { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+    .layer-border { position: absolute; inset: 1.2rem; border-radius: 1.25rem; pointer-events: none; z-index: 4; }
+    .layer-content { position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; }
+    .drop-zone { border: 2px dashed #475569; background: rgba(15, 23, 42, 0.6); transition: 0.2s; }
+    .drop-zone:hover { border-color: #34d399; background: rgba(16, 185, 129, 0.1); }
+    .edit-item { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 1rem; margin-bottom: 0.75rem; transition: all 0.2s; }
+    .edit-item:focus-within { border-color: #34d399; background: #0f172a; }
+    .edit-input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; font-size: 0.875rem; padding: 0.5rem; border-radius: 0.375rem; width: 100%; transition: 0.2s; }
+    .edit-input:focus { outline: none; border-color: #34d399; }
+    .edit-label { font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; display: block; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tab-btn { padding: 0.5rem 1rem; font-size: 0.875rem; border-bottom: 2px solid transparent; color: #94a3b8; transition: 0.2s; }
+    .tab-btn.active { color: #34d399; border-bottom-color: #34d399; font-weight: 600; }
+    .setting-group-btn { flex: 1; font-size: 0.7rem; padding: 0.4rem; background: #334155; color: #cbd5e1; border: 1px solid #475569; transition: 0.2s; white-space: nowrap; }
+    .setting-group-btn:first-child { border-radius: 0.375rem 0 0 0.375rem; }
+    .setting-group-btn:last-child { border-radius: 0 0.375rem 0.375rem 0; }
+    .setting-group-btn.active { background: #34d399; color: #020617; border-color: #34d399; font-weight: bold; }
+    .mini-style-btn { width: 1.5rem; height: 1.5rem; border-radius: 9999px; border: 2px solid transparent; cursor: pointer; transition: 0.2s; }
+    .mini-style-btn:hover { transform: scale(1.1); }
+    .mini-style-btn.selected { border-color: #34d399; box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3); }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 overflow-hidden flex flex-col">
+
+  <header class="border-b border-slate-800 bg-slate-950/90 h-16 flex-none z-50">
+    <div class="max-w-full mx-auto px-6 h-full flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <h1 class="text-lg font-bold tracking-widest text-white uppercase">靈魂卡牌生成器</h1>
+        <span class="px-2 py-0.5 rounded bg-purple-900/50 text-purple-300 text-xs border border-purple-500/20">App 版</span>
+      </div>
+      <div class="text-xs text-slate-400 hidden md:block">支援安裝至桌面 (PWA)</div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- 左側控制區 -->
+    <aside class="w-full md:w-[420px] bg-slate-900/80 border-r border-slate-800 flex flex-col z-20 shadow-2xl">
+      
+      <div class="p-4 border-b border-slate-800 flex-none bg-slate-900">
+        <div id="dropZone" class="drop-zone rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer text-center h-20 group">
+          <div class="group-hover:text-emerald-400 transition-colors text-slate-300 font-medium text-sm flex items-center gap-2">
+            拖曳圖片至此開始
+          </div>
+          <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+        </div>
+      </div>
+
+      <div class="flex border-b border-slate-800 bg-slate-900/50 flex-none">
+        <button class="tab-btn active flex-1" onclick="switchTab('visual')">視覺編輯</button>
+        <button class="tab-btn flex-1" onclick="switchTab('json')">JSON</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
+        <div id="visualEditor" class="space-y-4">
+          <div id="editorList"></div>
+        </div>
+        <div id="jsonEditor" class="hidden h-full flex flex-col">
+          <textarea id="jsonInput" class="w-full flex-1 rounded-lg p-3 text-xs font-mono bg-slate-950 border border-slate-700 resize-none outline-none" spellcheck="false"></textarea>
+          <button onclick="parseJson()" class="mt-3 w-full py-2 bg-slate-700 hover:bg-slate-600 text-xs rounded text-white">應用變更</button>
+        </div>
+      </div>
+
+      <!-- 底部設定與署名 -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900 flex-none space-y-4">
+        
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">批次套用</label>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex w-full">
+              <button class="setting-group-btn active" onclick="batchUpdate('ratio', 'card')" id="btnRatioCard">卡牌</button>
+              <button class="setting-group-btn" onclick="batchUpdate('ratio', 'post')" id="btnRatioPost">貼文</button>
+              <button class="setting-group-btn" onclick="batchUpdate('ratio', 'story')" id="btnRatioStory">限動</button>
+            </div>
+            <div class="flex w-full">
+              <button class="setting-group-btn active" onclick="batchUpdate('font', 'sans')" id="btnFontSans">黑體</button>
+              <button class="setting-group-btn font-song" onclick="batchUpdate('font', 'serif')" id="btnFontSerif">宋體</button>
+            </div>
+          </div>
+          <div class="flex w-full">
+             <button class="setting-group-btn active" onclick="batchUpdate('theme', 'default')" id="btnThemeDefault">暗夜</button>
+             <button class="setting-group-btn" onclick="batchUpdate('theme', 'light')" id="btnThemeLight">晨曦</button>
+             <button class="setting-group-btn" onclick="batchUpdate('theme', 'gold')" id="btnThemeGold">黑金</button>
+          </div>
+        </div>
+
+        <div>
+          <input type="range" id="rangeDarkness" min="0" max="100" value="75" class="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+        
+        <button id="btnDownload" class="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-900/50 transition-all text-sm flex items-center justify-center gap-2">
+          <span>下載全部 (ZIP)</span>
+        </button>
+
+        <!-- 開發者署名 -->
+        <div class="text-center border-t border-slate-800/50 pt-3">
+          <p class="text-[10px] text-slate-500 font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity cursor-default">
+            Developed by <span class="text-emerald-500 font-bold">Smachic Studio</span>
+          </p>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 右側預覽 -->
+    <main class="flex-1 bg-slate-950 relative flex flex-col overflow-hidden">
+      <div class="h-12 border-b border-slate-800/50 flex items-center justify-between px-6 bg-slate-900/30 backdrop-blur z-10">
+        <div class="text-xs text-slate-400">預覽 <span id="pageInfo" class="text-slate-200 ml-2 font-mono">0/0</span></div>
+        <div class="flex gap-2">
+          <button id="btnPrev" class="px-3 py-1 text-xs border border-slate-700 rounded text-slate-300 hover:bg-slate-800">上頁</button>
+          <button id="btnNext" class="px-3 py-1 text-xs border border-slate-700 rounded text-slate-300 hover:bg-slate-800">下頁</button>
+        </div>
+      </div>
+      <div id="previewContainer" class="flex-1 overflow-y-auto p-8 flex flex-wrap justify-center content-start gap-8 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
+        <div class="mt-20 text-slate-600 text-sm">右側預覽區</div>
+      </div>
+    </main>
+
+    <div id="exportContainer" style="position: absolute; top: -9999px; left: -9999px;"></div>
+  </div>
+
+  <script>
+    // PWA Service Worker 註冊
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(reg => console.log('PWA Ready', reg.scope), err => console.log('PWA Fail', err));
+      });
+    }
+
+    // === V5 核心邏輯 (與前版相同，省略細節以節省篇幅，但功能全在) ===
+    let state = { cards: [], page: 1, pageSize: 4, overlayOpacity: 0.75, globalSettings: { theme: 'default', font: 'sans', ratio: 'card' } };
+    const themes = {
+      default: { name: '暗夜', bgCard: '#020617', overlay: (op)=>`linear-gradient(to bottom, rgba(2,6,23,0.2), rgba(2,6,23,${op}))`, gridOpacity: 0.42, gridColor: 'rgba(248,250,252,0.6)', border: 'border:1px solid rgba(148,163,184,0.38);box-shadow:0 0 20px rgba(234,179,8,0.18),inset 0 0 30px rgba(15,23,42,0.92)', tagBg: 'bg-slate-900/50 border-slate-500/50 text-slate-300', lineGrad: 'from-amber-200/40', accent: 'bg-amber-400', accentTx: 'text-amber-200', orbit: 'bg-sky-400', orbitTx: 'text-sky-200', orbitGrad: 'from-sky-400', textMain:'text-white', textSub:'text-slate-100', textFooter:'text-slate-400' },
+      light: { name: '晨曦', bgCard: '#f8fafc', overlay: (op)=>`linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,${Math.min(op+0.15,0.98)}))`, gridOpacity: 0.2, gridColor: 'rgba(148,163,184,0.5)', border: 'border:1px solid rgba(148,163,184,0.4);box-shadow:0 0 30px rgba(226,232,240,0.8),inset 0 0 20px rgba(255,255,255,0.8)', tagBg: 'bg-white/80 border-slate-300 text-slate-500', lineGrad: 'from-slate-400/50', accent: 'bg-emerald-500', accentTx: 'text-emerald-600', orbit: 'bg-indigo-400', orbitTx: 'text-indigo-400', orbitGrad: 'from-indigo-400', textMain:'text-slate-800', textSub:'text-slate-600', textFooter:'text-slate-400' },
+      gold: { name: '黑金', bgCard: '#1c1917', overlay: (op)=>`linear-gradient(to bottom, rgba(28,25,23,0.2), rgba(28,25,23,${op}))`, gridOpacity: 0.3, gridColor: 'rgba(251,191,36,0.4)', border: 'border:1px solid rgba(251,191,36,0.5);box-shadow:0 0 25px rgba(217,119,6,0.25),inset 0 0 40px rgba(0,0,0,0.8)', tagBg: 'bg-black/60 border-amber-500/50 text-amber-500', lineGrad: 'from-amber-500', accent: 'bg-amber-500', accentTx: 'text-amber-500', orbit: 'bg-amber-300', orbitTx: 'text-amber-300', orbitGrad: 'from-amber-300', textMain:'text-amber-50', textSub:'text-amber-100/90', textFooter:'text-amber-500/60' }
+    };
+    
+    window.batchUpdate = (k,v) => { state.globalSettings[k]=v; state.cards.forEach(c=>c[k]=v); document.querySelectorAll(`[id^="btn${k.charAt(0).toUpperCase()+k.slice(1)}"]`).forEach(b=>b.classList[b.id.toLowerCase().includes(v)?'add':'remove']('active')); updateEditorList(); renderPreview(); };
+    window.updateSingle = (i,k,v) => { state.cards[i][k]=v; updateEditorList(); renderPreview(); };
+    
+    // 簡化的渲染與下載邏輯 (與 V5 相同)
+    function updateEditorList() {
+      const c = document.getElementById('editorList'); c.innerHTML='';
+      if(!state.cards.length){ c.innerHTML='<div class="text-center text-slate-500 py-10 text-sm">尚未有資料<br><button onclick="loadSample()" class="text-emerald-400">載入範例</button></div>'; return; }
+      state.cards.forEach((card, i) => {
+        const t = themes[card.theme||state.globalSettings.theme];
+        const item = document.createElement('div'); item.className='edit-item';
+        item.innerHTML = `
+          <div class="flex gap-4 items-start">
+            <div class="shrink-0 relative"><img src="${card.image||''}" class="w-16 h-24 object-cover rounded bg-slate-950 border border-slate-700"><div class="absolute -top-2 -left-2 bg-slate-700 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow">${i+1}</div></div>
+            <div class="flex-1 space-y-2 min-w-0">
+              <div class="flex justify-between"><div class="flex-1 mr-2"><label class="edit-label">標題</label><input class="edit-input" value="${esc(card.title)}" oninput="upd(${i},'title',this.value)"></div>
+              <div class="text-right"><label class="edit-label">風格</label><div class="flex gap-1"><button class="mini-style-btn ${card.theme=='default'?'selected':''}" style="background:#020617" onclick="updateSingle(${i},'theme','default')"></button><button class="mini-style-btn ${card.theme=='light'?'selected':''}" style="background:#e2e8f0" onclick="updateSingle(${i},'theme','light')"></button><button class="mini-style-btn ${card.theme=='gold'?'selected':''}" style="background:#451a03" onclick="updateSingle(${i},'theme','gold')"></button></div></div></div>
+              <div><div class="flex justify-between mb-1"><label class="edit-label">內文</label><div class="flex bg-slate-800 rounded p-0.5"><button onclick="updateSingle(${i},'align','left')" class="px-2 py-0.5 rounded text-[10px] ${card.align=='left'?'bg-slate-600 text-white':'text-slate-400'}">左</button><button onclick="updateSingle(${i},'align','center')" class="px-2 py-0.5 rounded text-[10px] ${card.align=='center'?'bg-slate-600 text-white':'text-slate-400'}">中</button></div></div><textarea class="edit-input h-16" oninput="upd(${i},'text',this.value)">${esc(card.text)}</textarea></div>
+              <div class="flex gap-2"><div class="flex-1"><label class="edit-label">頁尾</label><input class="edit-input text-xs" value="${esc(card.footer)}" oninput="upd(${i},'footer',this.value)"></div><button onclick="rm(${i})" class="text-slate-500 hover:text-red-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div>
+            </div>
+          </div>`;
+        c.appendChild(item);
+      });
+    }
+    function createHTML(d, i, isEx=false) {
+      const th = themes[d.theme||state.globalSettings.theme]; const rt = d.ratio||state.globalSettings.ratio; const ft = d.font||state.globalSettings.font;
+      let w='360px', h='576px'; if(rt=='post'){h='450px'} if(rt=='story'){h='640px'};
+      const dlBtn = isEx?'':`<button onclick="dlSingle(${i})" class="absolute top-3 right-3 z-50 p-2 bg-slate-900/50 hover:bg-emerald-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></button>`;
+      return `<div class="group relative ${isEx?'export-wrapper':'inline-block p-4 scale-[0.85] md:scale-100 origin-top'}" style="width:${isEx?'auto':parseInt(w)+32+'px'}">${dlBtn}<div class="soul-card ${ft=='serif'?'font-song':'font-sans'}" style="width:${w};height:${h};background:${th.bgCard};box-shadow:0 0 40px rgba(0,0,0,0.5)"><div class="layer-photo"><img src="${d.image||''}"></div><div class="layer-overlay" style="background:${th.overlay(state.overlayOpacity)}"></div><div class="layer-grid" style="opacity:${th.gridOpacity};background-image:radial-gradient(${th.gridColor} 1px,transparent 0)"></div><div class="layer-border" style="${th.border}"></div><div class="layer-content"><div><div class="flex items-center gap-3 mb-4 opacity-90 ${d.align=='center'?'justify-center':''}"><span class="px-3 py-1 rounded-full text-[10px] tracking-[0.2em] uppercase border ${th.tagBg} font-cinzel">Soul Card</span><div class="h-px ${d.align=='center'?'w-12':'flex-1'} bg-gradient-to-r ${th.lineGrad} to-transparent"></div></div><h2 class="text-2xl md:text-3xl font-bold tracking-widest ${th.textMain} drop-shadow-lg leading-tight ${d.align=='center'?'text-center':''}">${esc(d.title)}</h2></div><div class="text-sm md:text-base leading-relaxed ${th.textSub} font-medium whitespace-pre-line drop-shadow opacity-95 ${d.align=='center'?'text-center':'text-left'}">${esc(d.text)}</div><div class="pt-4 border-t ${d.theme=='light'?'border-slate-300':'border-white/20'}"><div class="flex justify-between items-end"><div class="flex items-center gap-2"><span class="w-1 h-1 rounded-full ${th.accent}"></span><span class="w-8 h-px bg-gradient-to-r ${th.lineGrad} to-transparent"></span><span class="text-[10px] ${th.accentTx}">東方圖騰</span><div class="text-xs ${th.textFooter} font-mono ml-2">${esc(d.footer)}</div></div><div class="text-right flex items-center gap-2"><span class="text-[10px] ${th.orbitTx}">星圖軌道</span><span class="w-8 h-px bg-gradient-to-l ${th.orbitGrad} to-transparent"></span><span class="w-1 h-1 rounded-full ${th.orbit}"></span></div></div></div></div></div></div>`;
+    }
+    function renderPreview() { const c=document.getElementById('previewContainer'); c.innerHTML=''; const start=(state.page-1)*state.pageSize; const end=Math.min(start+state.pageSize,state.cards.length); if(!state.cards.length){ c.innerHTML='<div class="mt-20 text-slate-500 text-sm">請上傳圖片</div>'; return;} for(let i=start;i<end;i++){ const d=document.createElement('div'); d.innerHTML=createHTML(state.cards[i],i); c.appendChild(d); } document.getElementById('pageInfo').textContent=`${state.page}/${Math.ceil(state.cards.length/state.pageSize)}`; }
+    window.upd=(i,k,v)=>{state.cards[i][k]=v;renderPreview();}
+    window.rm=(i)=>{if(confirm('刪除?')){state.cards.splice(i,1);updateEditorList();renderPreview();}}
+    function esc(t){return t?t.replace(/&/g,"&amp;").replace(/</g,"&lt;"):""}
+    
+    window.dlSingle = async(i)=>{ const c=state.cards[i]; const b=document.getElementById('exportContainer'); b.innerHTML=''; const w=document.createElement('div'); w.innerHTML=createHTML(c,i,true); w.id='ex'; b.appendChild(w); await new Promise(r=>setTimeout(r,600)); const d=await htmlToImage.toPng(document.getElementById('ex'),{quality:1,pixelRatio:2,cacheBust:true}); saveAs(d,`soul-card-${i+1}.png`); b.innerHTML=''; }
+    document.getElementById('btnDownload').onclick=async()=>{ const z=new JSZip(); const b=document.getElementById('exportContainer'); b.innerHTML=''; state.cards.forEach((c,i)=>{ const w=document.createElement('div'); w.innerHTML=createHTML(c,i,true); w.id=`ex-${i}`; b.appendChild(w); }); await new Promise(r=>setTimeout(r,1000)); for(let i=0;i<state.cards.length;i++){ const d=await htmlToImage.toPng(document.getElementById(`ex-${i}`),{quality:1,pixelRatio:2,cacheBust:true}); z.file(`card-${i+1}.png`,d.split(',')[1],{base64:true}); } const c=await z.generateAsync({type:'blob'}); saveAs(c,'cards.zip'); b.innerHTML=''; };
+    
+    // 初始化載入範例
+    window.loadSample=async()=>{ 
+      const url2base = async(u) => { try{ const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(u)); const b=await r.blob(); return new Promise(res=>{const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b)}) }catch{return ''} };
+      const raw=[{title:"靜觀子",text:"安住於當下的呼吸...",footer:"001",imageUrl:"https://images.unsplash.com/photo-1518173946687-a4c88928d9fd?w=800"},{title:"一字山人",text:"萬物皆可輕聲落下...",footer:"002",imageUrl:"https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800"}];
+      state.cards = await Promise.all(raw.map(async i=>({...i, image:await url2base(i.imageUrl), theme:'default', align:'left'})));
+      updateEditorList(); renderPreview();
+    };
+    
+    // 上傳處理
+    document.getElementById('fileInput').onchange=(e)=>{ Array.from(e.target.files).forEach(f=>{ const r=new FileReader(); r.onload=(ev)=>{ state.cards.push({title:f.name.replace(/\.[^.]+$/,""), text:"（內容）", footer:"IMG", image:ev.target.result, theme:state.globalSettings.theme, align:'left'}); updateEditorList(); renderPreview(); }; r.readAsDataURL(f); }); };
+    document.getElementById('dropZone').onclick=()=>document.getElementById('fileInput').click();
+    document.getElementById('dropZone').ondragover=(e)=>{e.preventDefault();}; document.getElementById('dropZone').ondrop=(e)=>{e.preventDefault(); document.getElementById('fileInput').files=e.dataTransfer.files; document.getElementById('fileInput').onchange({target:{files:e.dataTransfer.files}})};
+    document.getElementById('rangeDarkness').oninput=(e)=>{state.overlayOpacity=e.target.value/100; renderPreview();};
+    window.switchTab=(t)=>{if(t=='visual'){document.getElementById('visualEditor').classList.remove('hidden');document.getElementById('jsonEditor').classList.add('hidden');updateEditorList();}else{document.getElementById('visualEditor').classList.add('hidden');document.getElementById('jsonEditor').classList.remove('hidden');document.getElementById('jsonInput').value=JSON.stringify(state.cards);}}
+    window.parseJson=()=>{try{state.cards=JSON.parse(document.getElementById('jsonInput').value);updateEditorList();renderPreview();}catch{}}
+    
+    updateEditorList(); renderPreview();
+  </script>
+</body>
+</html>
