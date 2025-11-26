@@ -1,4 +1,4 @@
-const CACHE_NAME = 'soul-card-v8';
+const CACHE_NAME = 'soul-card-v9';
 const urlsToCache = [
   './index.html',
   './manifest.json'
